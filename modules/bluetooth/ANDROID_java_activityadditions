@@ -1,1 +1,4 @@
 native void setLocalBTAddress(java.lang.String local);
+public static BluetoothManager getBluetoothInstance(){
+  return mBluetoothManager;
+}
