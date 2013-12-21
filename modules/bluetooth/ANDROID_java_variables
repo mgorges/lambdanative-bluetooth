@@ -1,0 +1,5 @@
+private BluetoothAdapter BTadapter = null;
+private BluetoothDevice BTdevice=null;
+private String BTlocaladdress = null;
+private static BluetoothManager mBluetoothManager;
+private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();

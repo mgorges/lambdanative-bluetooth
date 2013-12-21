@@ -1,0 +1,124 @@
+static char *bt_local_address;
+char* android_get_local_address(){
+  return bt_local_address;
+}
+void Java_@SYS_ORGTLD@_@SYS_ORGSLD@_@SYS_LOCASEAPPNAME@_@SYS_APPNAME@_setLocalBTAddress(JNIEnv* e, jobject o, jstring local) {
+  bt_local_address=(*e)->GetStringUTFChars(e,local,0);
+}
+
+static int needs_init=1;
+static jobject bluetooth_object=NULL;
+static jclass bluetooth_class=NULL;
+static jmethodID s_bluetooth_open=NULL;
+static jmethodID s_bluetooth_close=NULL;
+static jmethodID s_bluetooth_writechar=NULL;
+static jmethodID s_bluetooth_readchar=NULL;
+static jmethodID s_bluetooth_flush=NULL;
+
+int bluetooth_init(){
+  JNIEnv *env = GetJNIEnv();
+  if (env) {
+    bluetooth_class = (*env)->FindClass(env, "@SYS_ORGTLD@/@SYS_ORGSLD@/@SYS_LOCASEAPPNAME@/BluetoothManager");
+    jclass main_class = (*env)->FindClass(env, "@SYS_ORGTLD@/@SYS_ORGSLD@/@SYS_LOCASEAPPNAME@/@SYS_APPNAME@");
+    if (bluetooth_class && main_class) {
+      jmethodID getBluetoothInstance = (*env)->GetStaticMethodID(env,main_class, "getBluetoothInstance","()L@SYS_ORGTLD@/@SYS_ORGSLD@/@SYS_LOCASEAPPNAME@/BluetoothManager;");
+      s_bluetooth_open = (*env)->GetMethodID(env,bluetooth_class, "open", "(Ljava/lang/String;)I");
+      s_bluetooth_close = (*env)->GetMethodID(env,bluetooth_class, "close", "(I)I");
+      s_bluetooth_writechar = (*env)->GetMethodID(env,bluetooth_class, "writechar", "(II)V");
+      s_bluetooth_readchar = (*env)->GetMethodID(env,bluetooth_class, "readchar", "(I)I");
+      s_bluetooth_flush = (*env)->GetMethodID(env,bluetooth_class, "flush", "(I)V");
+      if (getBluetoothInstance) {
+         jobject thiz = (*env)->CallStaticObjectMethod(env, main_class, getBluetoothInstance);
+         bluetooth_object = (*env)->NewGlobalRef(env,thiz);
+       }
+    }
+  } else {
+    bluetooth_object=NULL;
+  }
+}
+
+int android_bluetooth_open(char *dev){
+  if (needs_init==1){
+    bluetooth_init();
+    needs_init=0;
+  }
+  JNIEnv *env = GetJNIEnv();
+  if (env&&bluetooth_object) {
+    bluetooth_error_set(0);
+    bluetooth_timeout_set(0);
+    jstring dev_str = (*env)->NewStringUTF(env,dev);
+    int ret = (*env)->CallIntMethod(env,bluetooth_object, s_bluetooth_open, dev_str);
+    if (ret==-1){
+      bluetooth_error_set(1);
+      return 0;
+    }
+    return ret;
+  } else {
+    bluetooth_error_set(1);
+    return 0;
+  }
+}
+
+void android_bluetooth_close(int dev){
+  if (needs_init==1){
+    bluetooth_init();
+    needs_init=0;
+  }
+  JNIEnv *env = GetJNIEnv();
+  if (env&&bluetooth_object) {
+    bluetooth_timeout_set(0);
+    bluetooth_error_set(0);
+    int error=(*env)->CallIntMethod(env,bluetooth_object, s_bluetooth_close, dev);
+    if (error>0){
+      bluetooth_error_set(1);
+    }
+  }
+}
+void android_bluetooth_writechar(int dev, int val){
+  if (needs_init==1){
+    bluetooth_init();
+    needs_init=0;
+  }
+  JNIEnv *env = GetJNIEnv();
+  if (env&&bluetooth_object) {
+    bluetooth_timeout_set(0);
+    (*env)->CallIntMethod(env,bluetooth_object, s_bluetooth_writechar, dev, val);
+  }
+}
+int android_bluetooth_readchar(int dev){
+  if (needs_init==1){
+    bluetooth_init();
+    needs_init=0;
+  }
+  JNIEnv *env = GetJNIEnv();
+  if (env&&bluetooth_object) {
+    bluetooth_timeout_set(0);
+    int ret=(*env)->CallIntMethod(env,bluetooth_object, s_bluetooth_readchar, dev);
+    if (ret==-1){
+      bluetooth_timeout_set(1);
+      return 0;
+    }
+    if (ret==-2){
+      bluetooth_error_set(1);
+      return 0;
+    }
+    return ret;
+  } else {
+    bluetooth_error_set(1);
+    return 0;
+  }
+}
+void android_bluetooth_flush(int dev){
+  if (needs_init==1){
+    bluetooth_init();
+    needs_init=0;
+  }
+  JNIEnv *env = GetJNIEnv();
+  if (env&&bluetooth_object) {
+    (*env)->CallIntMethod(env,bluetooth_object, s_bluetooth_flush, dev);
+  }
+}
+int android_bluetooth_openfile(char *filepath){
+  bluetooth_error_set(1);
+  return 0;
+}

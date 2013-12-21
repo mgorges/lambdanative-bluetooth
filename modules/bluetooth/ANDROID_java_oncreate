@@ -1,0 +1,23 @@
+// Connect to the BT adapter, close program if BT not enabled
+BTadapter = BluetoothAdapter.getDefaultAdapter();
+if (BTadapter == null)
+  new AlertDialog.Builder(this)
+    .setTitle( "Fatal Error" )
+    .setMessage( "Bluetooth Not supported. Press OK to exit." )
+    .setPositiveButton("OK", new OnClickListener() {
+      public void onClick(DialogInterface arg0, int arg1) {
+        finish();
+      }
+    }).show();
+if (!BTadapter.isEnabled()) {
+  //Prompt user to turn on Bluetooth
+  Intent enableBtIntent = new Intent(BTadapter.ACTION_REQUEST_ENABLE);
+  startActivityForResult(enableBtIntent, 1);
+}
+// Get the local Bluetooth address
+BTlocaladdress=BTadapter.getAddress();
+setLocalBTAddress(BTlocaladdress);
+
+// Initialize the BluetoothManager class
+mBluetoothManager=new BluetoothManager(BTadapter);
+mExecutor.submit(mBluetoothManager);
