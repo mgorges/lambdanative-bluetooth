@@ -31,7 +31,7 @@ class BluetoothManager implements Runnable{
   private final ByteBuffer tmpInBuffer = ByteBuffer.allocate(BUFFERSIZE);
   private boolean isreading = false;
   private boolean error_flag = false;
-  private boolean DEBUG = false;
+  private boolean DEBUG = true;
 
   public BluetoothManager(BluetoothAdapter BTadapter) {
     super();
@@ -89,7 +89,7 @@ class BluetoothManager implements Runnable{
         if (getState() != State.RUNNING){
           break;
         }
-        if ( BTsocket == null) {
+        if ( BTsocket == null || BTsocket.isConnected() == false) {
           continue;
         }
         error_flag=false;
@@ -133,7 +133,7 @@ class BluetoothManager implements Runnable{
           if (DEBUG) Log.d("BluetoothManager","Sent: "+s);
         }
       } catch (Exception e) {
-        Log.d("BluetoothManager","Exception: "+e);
+        Log.d("BluetoothManager","Exception in Run: "+e);
         close(0);
         error_flag=true;
       }
@@ -141,9 +141,12 @@ class BluetoothManager implements Runnable{
   }
   // Open the Serial Port
   public int open(String devname){
-   if (!BTadapter.checkBluetoothAddress(devname)){
-    return 0;
+    if (!BTadapter.checkBluetoothAddress(devname)){
+     return 0;
     }
+    // Stop discovery process if one is ongoing to save power.
+    BTadapter.cancelDiscovery();
+
     BTaddress=devname;
     BluetoothDevice BTdevice = BTadapter.getRemoteDevice(BTaddress);
     if (BTdevice == null){
@@ -154,14 +157,14 @@ class BluetoothManager implements Runnable{
     try {
       BTsocket = BTdevice.createRfcommSocketToServiceRecord(BTuuid);
     } catch (IOException e) {
+      Log.d("BluetoothManager","Can't make RFCOMM socket: "+e);
       error_flag=true;
       return 0;
     }
-    // Stop discovery process if one is ongoing to save power.
-    BTadapter.cancelDiscovery();
     // Make the connection
     try {
       BTsocket.connect();
+      Log.d("Open","After connect");
     } catch (IOException e) {
       try {
         BTsocket.close();
@@ -169,17 +172,21 @@ class BluetoothManager implements Runnable{
         error_flag=true;
         return 0;
       }
+      Log.d("BluetoothManager","Can't connect: "+e);
       error_flag=true;
       return 0;
     }
+    Log.d("Open","Connect");
     // Get the IO Streams
     try {
       BToutStream = BTsocket.getOutputStream();
       BTinStream = BTsocket.getInputStream();
     } catch (IOException e) {
+      Log.d("BluetoothManager","Can't get IO Streams: "+e);
       error_flag=true;
       return 0;
     }
+    Log.d("Open","BTinStream");
     // Return some unused identifier to be interface compatible with serial.
     return BTdevice.hashCode();  
   }

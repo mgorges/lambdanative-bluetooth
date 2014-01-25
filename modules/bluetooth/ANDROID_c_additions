@@ -14,6 +14,7 @@ static jmethodID s_bluetooth_close=NULL;
 static jmethodID s_bluetooth_writechar=NULL;
 static jmethodID s_bluetooth_readchar=NULL;
 static jmethodID s_bluetooth_flush=NULL;
+//static jmethodID s_bluetooth_getpaireddevices=NULL;
 
 int bluetooth_init(){
   JNIEnv *env = GetJNIEnv();
@@ -27,6 +28,7 @@ int bluetooth_init(){
       s_bluetooth_writechar = (*env)->GetMethodID(env,bluetooth_class, "writechar", "(II)V");
       s_bluetooth_readchar = (*env)->GetMethodID(env,bluetooth_class, "readchar", "(I)I");
       s_bluetooth_flush = (*env)->GetMethodID(env,bluetooth_class, "flush", "(I)V");
+//     s_bluetooth_getpaireddevices = (*env)->GetMethodID(env,bluetooth_class, "getPairedDevices", "()[Ljava/lang/String;");
       if (getBluetoothInstance) {
          jobject thiz = (*env)->CallStaticObjectMethod(env, main_class, getBluetoothInstance);
          bluetooth_object = (*env)->NewGlobalRef(env,thiz);
@@ -122,3 +124,10 @@ int android_bluetooth_openfile(char *filepath){
   bluetooth_error_set(1);
   return 0;
 }
+
+//void android_bluetooth_getpaireddevices(){
+//  JNIEnv *env = GetJNIEnv();
+//  if (env&&bluetooth_object){
+//    (*env)->CallVoidMethod(env,bluetooth_object,s_bluetooth_getpaireddevices);
+//  }
+//}
