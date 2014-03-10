@@ -39,20 +39,15 @@ class BluetoothManager implements Runnable{
   }
 
   // Get device names of the ones we are paired with already
-  public String[][] getPairedDevices() {
-    String[][] devs;
+  public void getPairedDevices() {
     int i = 0;
     Set<BluetoothDevice> pairedDevices = BTadapter.getBondedDevices();
     if (pairedDevices.size() > 0) {
-      devs = new String [pairedDevices.size()][2];
       for (BluetoothDevice device : pairedDevices) {
-        devs[i][0] = device.getName();
-        devs[i][1] = device.getAddress();
+        passNameAddress(i,device.getName(),device.getAddress());
         i++;
       }
-      return devs;
     }
-    return null;
   }
 
   //Code for Synchronisation
@@ -164,7 +159,6 @@ class BluetoothManager implements Runnable{
     // Make the connection
     try {
       BTsocket.connect();
-      Log.d("Open","After connect");
     } catch (IOException e) {
       try {
         BTsocket.close();
@@ -176,7 +170,6 @@ class BluetoothManager implements Runnable{
       error_flag=true;
       return 0;
     }
-    Log.d("Open","Connect");
     // Get the IO Streams
     try {
       BToutStream = BTsocket.getOutputStream();
@@ -186,7 +179,6 @@ class BluetoothManager implements Runnable{
       error_flag=true;
       return 0;
     }
-    Log.d("Open","BTinStream");
     // Return some unused identifier to be interface compatible with serial.
     return BTdevice.hashCode();  
   }
@@ -237,4 +229,7 @@ class BluetoothManager implements Runnable{
     }
     if (DEBUG) Log.d("BluetoothManager","Flush mInBuffer");
   }
+
+  // JNI bindings
+  native void passNameAddress(int ct, String name, String address);
 }

@@ -39,10 +39,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;; communicate over bluetooth (android only)
 
 (c-declare  #<<end-of-c-declare
+#include <string.h>
 
 static int _bluetooth_error, _bluetooth_notready;
 int bluetooth_error(void) { return _bluetooth_error; }
 int bluetooth_timeout(void) { return _bluetooth_notready; }
+
+static char *bt_remote_address[16];
+static char *bt_remote_name[16];
+static int bt_remote_ct=0;
+int bluetooth_remote_number(void) { return bt_remote_ct; }
 
 #ifdef ANDROID
   char* android_get_local_address();
@@ -104,6 +110,15 @@ void bluetooth_flush(int dev){
 #endif
 }
 
+char bluetooth_getremoteaddress(int i, char* name, char* address){
+  if (i<bt_remote_ct){
+    strcpy(name,bt_remote_name[i]);
+    strcpy(address,bt_remote_address[i]);
+    return 1;
+  }
+  return 0;
+}
+
 end-of-c-declare
 )
 
@@ -112,6 +127,20 @@ end-of-c-declare
     ((c-lambda (scheme-object) void "bluetooth_getlocaladdress(___CAST(char*,___BODY_AS(___arg1,___tSUBTYPED)));") 
      res)
     (u8vector->string res)
+  ))
+
+(define (bluetooth-getremoteaddresses)
+  (let loop ((i 0) (ret (list)))
+    (if (fx= i ((c-lambda () int "bluetooth_remote_number")))
+      ret
+      (loop (fx+ i 1) (let ((name "") (address ""))
+        (if ((c-lambda (int char-string char-string) bool
+                       "___result=bluetooth_getremoteaddress(___arg1,___arg2,___arg3);") i name address)
+          (append ret (list name address))
+          ret
+        )
+      ))
+    )
   ))
 
 (define bluetooth:error (c-lambda () int "bluetooth_error"))

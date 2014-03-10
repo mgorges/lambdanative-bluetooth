@@ -14,7 +14,7 @@ static jmethodID s_bluetooth_close=NULL;
 static jmethodID s_bluetooth_writechar=NULL;
 static jmethodID s_bluetooth_readchar=NULL;
 static jmethodID s_bluetooth_flush=NULL;
-//static jmethodID s_bluetooth_getpaireddevices=NULL;
+static jmethodID s_bluetooth_getpaireddevices=NULL;
 
 int bluetooth_init(){
   JNIEnv *env = GetJNIEnv();
@@ -28,7 +28,7 @@ int bluetooth_init(){
       s_bluetooth_writechar = (*env)->GetMethodID(env,bluetooth_class, "writechar", "(II)V");
       s_bluetooth_readchar = (*env)->GetMethodID(env,bluetooth_class, "readchar", "(I)I");
       s_bluetooth_flush = (*env)->GetMethodID(env,bluetooth_class, "flush", "(I)V");
-//     s_bluetooth_getpaireddevices = (*env)->GetMethodID(env,bluetooth_class, "getPairedDevices", "()[Ljava/lang/String;");
+      s_bluetooth_getpaireddevices = (*env)->GetMethodID(env,bluetooth_class, "getPairedDevices", "()V");
       if (getBluetoothInstance) {
          jobject thiz = (*env)->CallStaticObjectMethod(env, main_class, getBluetoothInstance);
          bluetooth_object = (*env)->NewGlobalRef(env,thiz);
@@ -125,9 +125,19 @@ int android_bluetooth_openfile(char *filepath){
   return 0;
 }
 
-//void android_bluetooth_getpaireddevices(){
-//  JNIEnv *env = GetJNIEnv();
-//  if (env&&bluetooth_object){
-//    (*env)->CallVoidMethod(env,bluetooth_object,s_bluetooth_getpaireddevices);
-//  }
-//}
+char *bt_remote_address[16];
+char *bt_remote_name[16];
+int bt_remote_ct;
+
+JNIEXPORT void JNICALL Java_@SYS_ORGTLD@_@SYS_ORGSLD@_@SYS_LOCASEAPPNAME@_passNameAddress(JNIEnv* env, jobject obj, jint ct, jstring name, jstring address){
+  if (ct<16){
+    bt_remote_address[ct] = (char *)malloc(18*sizeof(char));
+    bt_remote_name[ct] = (char *)malloc(255*sizeof(char));
+    const char *bt_address = (*env)->GetStringUTFChars(env, address, 0);
+    const char *bt_name = (*env)->GetStringUTFChars(env, address, 0);
+    strcpy(bt_remote_address[ct], bt_address);
+    (*env)->ReleaseStringUTFChars(env, name, bt_name);
+    (*env)->ReleaseStringUTFChars(env, address, bt_address);
+    bt_remote_ct=ct;
+  }
+}
